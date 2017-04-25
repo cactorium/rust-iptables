@@ -1,5 +1,4 @@
 extern crate regex;
-extern crate nix;
 
 use std::{fmt, error, io, convert, num};
 
@@ -8,7 +7,6 @@ use std::{fmt, error, io, convert, num};
 pub enum IPTError {
     Io(io::Error),
     Regex(regex::Error),
-    Nix(nix::Error),
     Parse(num::ParseIntError),
     Other(&'static str),
 }
@@ -21,7 +19,6 @@ impl fmt::Display for IPTError {
         match *self {
             IPTError::Io(ref err) => write!(f, "{}", err),
             IPTError::Regex(ref err) => write!(f, "{}", err),
-            IPTError::Nix(ref err) => write!(f, "{}", err),
             IPTError::Parse(ref err) => write!(f, "{}", err),
             IPTError::Other(ref message) => write!(f, "{}", message),
         }
@@ -33,7 +30,6 @@ impl error::Error for IPTError {
         match *self {
             IPTError::Io(ref err) => err.description(),
             IPTError::Regex(ref err) => err.description(),
-            IPTError::Nix(ref err) => err.description(),
             IPTError::Parse(ref err) => err.description(),
             IPTError::Other(ref message) => message,
         }
@@ -43,7 +39,6 @@ impl error::Error for IPTError {
         match *self {
             IPTError::Io(ref err) => Some(err),
             IPTError::Regex(ref err) => Some(err),
-            IPTError::Nix(ref err) => Some(err),
             IPTError::Parse(ref err) => Some(err),
             _ => Some(self),
         }
@@ -59,12 +54,6 @@ impl convert::From<io::Error> for IPTError {
 impl convert::From<regex::Error> for IPTError {
     fn from(err: regex::Error) -> Self {
         IPTError::Regex(err)
-    }
-}
-
-impl convert::From<nix::Error> for IPTError {
-    fn from(err: nix::Error) -> Self {
-        IPTError::Nix(err)
     }
 }
 

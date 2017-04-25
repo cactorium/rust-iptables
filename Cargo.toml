@@ -17,4 +17,3 @@ name = "iptables"
 
 [dependencies]
 regex = "0.2"
-nix = "0.7.0"

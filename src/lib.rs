@@ -19,7 +19,6 @@
 //! ```
 
 extern crate regex;
-extern crate nix;
 
 pub mod error;
 
@@ -28,7 +27,6 @@ use regex::Regex;
 use error::{IPTResult, IPTError};
 use std::fs::File;
 use std::os::unix::io::AsRawFd;
-use nix::fcntl::{flock, FlockArg};
 use std::vec::Vec;
 use std::ffi::OsStr;
 
@@ -316,36 +314,13 @@ impl IPTables {
     }
 
     fn run<S: AsRef<OsStr>>(&self, args: &[S]) -> IPTResult<Output> {
-        let mut file_lock = None;
-
         let mut output_cmd = Command::new(self.cmd);
         let output;
 
         if self.has_wait {
             output = output_cmd.args(args).arg("--wait").output()?;
         } else {
-            file_lock = Some(File::create("/var/run/xtables_old.lock")?);
-
-            let mut need_retry = true;
-            while need_retry {
-                match flock(file_lock.as_ref().unwrap().as_raw_fd(), FlockArg::LockExclusiveNonblock) {
-                    Ok(_) => need_retry = false,
-                    Err(e) => if e.errno() == nix::errno::EAGAIN {
-                        // FIXME: may cause infinite loop
-                        need_retry = true;
-                    } else {
-                        return Err(IPTError::Nix(e));
-                    },
-                }
-            }
             output = output_cmd.args(args).output()?;
-        }
-
-        if !self.has_wait {
-            match file_lock {
-                Some(f) => drop(f),
-                None => (),
-            };
         }
 
         Ok(output)
